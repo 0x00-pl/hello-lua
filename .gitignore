@@ -1,0 +1,7 @@
+build
+
+.kdev4
+*.kdev4
+
+lua-5.2.3/*
+!lua-5.2.3/.gitkeep
