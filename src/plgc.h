@@ -14,7 +14,8 @@ namespace pl{
     "string",
     "function",
     "userdata",
-    "table"
+    "table",
+    "thread"
   };
 
   class gc_common{
@@ -23,12 +24,14 @@ namespace pl{
     static const int m_color=1;
     unsigned int refcount;
     gc_common* next;
+    int flags;
     
     gc_common(){
       mark=0;
       refcount=0;
       next=0;
     }
+    virtual ~gc_common(){}
     
     void setbit(int b){
       mark=mark|b;
@@ -37,6 +40,8 @@ namespace pl{
       mark=mark&~b;
     }
   };
+  
+  
   
   class pl_bool:gc_common{
   public:
@@ -50,12 +55,47 @@ namespace pl{
       _float,
       _bigint,
       _bignum
-    } type;
+    } num_type;
     union{
       int _int;float _float;
     } val;
-    void convert(){}
+    void convert(Ttype t){
+      if(t==num_type) return;
+      switch(num_type){
+	case _int:
+	  switch(t){
+	    case _float:
+	      float tmp= val._int;
+	      val._float= tmp;
+	      num_type= _float;
+	      break;
+	  }
+	  break;
+	case _float:
+	  switch(t){
+	    case _int:
+	      int tmp= val._float;
+	      val._int= tmp;
+	      num_type= _int;
+	      break;
+	  }
+	  break;
+      }
+    }
     operator int&(){return val._int;}
     operator float&(){return val._float;}
   };
+  
+  class pl_table:gc_common{
+  public:
+    map<gc_common*,gc_common*> table;
+    gc_common* operator [](gc_common*n){return table[n];}
+  };
+  
+  class pl_thread:gc_common{
+  public:
+    //vector<pl_table*>
+  };
+  
+  
 }
